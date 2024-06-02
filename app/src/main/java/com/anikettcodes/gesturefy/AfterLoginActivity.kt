@@ -1,4 +1,5 @@
 package com.anikettcodes.gesturefy
+
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -12,19 +13,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.anikettcodes.gesturefy.ui.theme.GestureFyTheme
-import com.spotify.sdk.android.auth.AuthorizationClient
-import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
 
-class MainActivity : ComponentActivity() {
-
-    val authorizationBuilder = AuthorizationRequest.Builder(clientId,AuthorizationResponse.Type.TOKEN,redirectUri)
-
+class AfterLoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        authorizationBuilder.setScopes(arrayOf("streaming"))
-        val request = authorizationBuilder.build()
-        AuthorizationClient.openLoginInBrowser(this,request)
         super.onCreate(savedInstanceState)
+        val uri = intent.data;
+        uri?.let {
+            val response = AuthorizationResponse.fromUri(it)
+
+            when(response.type){
+                AuthorizationResponse.Type.TOKEN->{
+                    Log.d(MainActivity.TAG,"Success")
+                }
+                else -> {
+                    Log.e(MainActivity.TAG,response.type.toString())
+                }
+            }
+        }
         setContent {
             GestureFyTheme {
                 // A surface container using the 'background' color from the theme
@@ -32,38 +38,20 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    Greeting2("After Login Activity")
                 }
             }
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-    }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
 
-
-
-
-    override fun onStop() {
-        super.onStop()
-    }
-
-    private fun connected(){
-
-    }
-
-
-    companion object{
-        val TAG = "MAIN_ACTIVITY"
-        private val REQUEST_CODE = 1337
-        private val clientId = "b97db8c9499948cbb95fedcbb466b0d7"
-        private val redirectUri = "mkhu://hy"
     }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun Greeting2(name: String, modifier: Modifier = Modifier) {
     Text(
         text = "Hello $name!",
         modifier = modifier
@@ -72,8 +60,8 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun GreetingPreview2() {
     GestureFyTheme {
-        Greeting("Android")
+        Greeting2("Android")
     }
 }
