@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
     val authorizationBuilder = AuthorizationRequest.Builder(clientId,AuthorizationResponse.Type.TOKEN,redirectUri)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        authorizationBuilder.setScopes(arrayOf("streaming"))
+        authorizationBuilder.setScopes(arrayOf("app-remote-control"))
         val request = authorizationBuilder.build()
         AuthorizationClient.openLoginInBrowser(this,request)
         super.onCreate(savedInstanceState)
@@ -57,8 +57,8 @@ class MainActivity : ComponentActivity() {
     companion object{
         val TAG = "MAIN_ACTIVITY"
         private val REQUEST_CODE = 1337
-        private val clientId = "b97db8c9499948cbb95fedcbb466b0d7"
-        private val redirectUri = "mkhu://hy"
+        val clientId = "b97db8c9499948cbb95fedcbb466b0d7"
+         val redirectUri = "mkhu://hy"
     }
 }
 
