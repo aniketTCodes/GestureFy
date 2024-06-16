@@ -1,4 +1,4 @@
-package com.anikettcodes.gesturefy.ui.theme
+package com.anikettcodes.gesturefy.presentation.ui.theme
 
 import android.app.Activity
 import android.os.Build
