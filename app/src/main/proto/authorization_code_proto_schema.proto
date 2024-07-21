@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_package = "com.anikettcodes.gesturefy.datastore";
+option java_multiple_files = true;
+
+message AuthorizationPreference{
+
+  string accessToken = 1;
+  int32 expiresIn = 2;
+  string refreshToken = 3;
+
+}
