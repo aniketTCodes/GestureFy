@@ -8,6 +8,11 @@ import kotlinx.coroutines.flow.catch
 import java.io.IOException
 import javax.inject.Inject
 
+
+/*
+Stores Authorization Data locally
+ */
+
 class LocalDatasource @Inject constructor (
     private val protoDataStore: DataStore<AuthorizationPreference>
 ) {

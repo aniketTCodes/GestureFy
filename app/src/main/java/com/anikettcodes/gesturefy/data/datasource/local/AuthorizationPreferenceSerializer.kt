@@ -8,6 +8,10 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
+/*
+Serializer for PROTO DATASTORE
+ */
+
 object AuthorizationPreferenceSerializer : Serializer<AuthorizationPreference> {
     override val defaultValue: AuthorizationPreference
         get() = AuthorizationPreference.getDefaultInstance()

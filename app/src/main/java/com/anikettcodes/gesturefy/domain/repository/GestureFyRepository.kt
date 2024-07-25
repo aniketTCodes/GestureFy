@@ -5,4 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface GestureFyRepository {
 
+    suspend fun getAuthorizationData():Flow<Boolean>
+
 }
