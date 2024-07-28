@@ -6,17 +6,18 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import com.anikettcodes.gesturefy.presentation.AuthorizationViewModel
+import com.anikettcodes.gesturefy.presentation.viewmodel.AuthorizationViewModel
 
 @Composable
 fun AuthorizationScreen(
-    viewModel:AuthorizationViewModel
+    viewModel: AuthorizationViewModel,
+    onAuthorize:()->Unit
 ){
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Button(onClick = {}) {
+        Button(onClick = onAuthorize) {
             Text(text = "Authorize Spotify")
         }
     }

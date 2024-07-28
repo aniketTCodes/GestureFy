@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -23,6 +25,12 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+         val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+        buildConfigField("String","CLIENT_ID",properties.getProperty("CLIENT_ID"))
+        buildConfigField("String","CLIENT_SECRET",properties.getProperty("CLIENT_SECRET"))
+        buildConfigField("String","REDIRECT_URI",properties.getProperty("REDIRECT_URI"))
     }
 
     buildTypes {
@@ -43,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true
+        android.buildFeatures.buildConfig  = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"

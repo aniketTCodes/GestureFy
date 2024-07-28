@@ -1,46 +1,41 @@
 package com.anikettcodes.gesturefy.presentation
 
 import android.content.Intent
+import android.net.Uri
+import android.net.Uri.Builder
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.anikettcodes.gesturefy.data.datasource.local.LocalDatasource
-import com.anikettcodes.gesturefy.datastore.AuthorizationPreference
-import com.anikettcodes.gesturefy.di.AppModule
+import com.anikettcodes.gesturefy.BuildConfig
 import com.anikettcodes.gesturefy.presentation.screens.AuthorizationScreen
 import com.anikettcodes.gesturefy.presentation.screens.HomeScreen
 import com.anikettcodes.gesturefy.presentation.ui.theme.GestureFyTheme
-import dagger.hilt.EntryPoint
-import dagger.hilt.EntryPoints
+import com.anikettcodes.gesturefy.presentation.viewmodel.AuthorizationViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.EntryPointAccessors
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
+import java.util.UUID
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val data: Uri? = intent?.data
+        data?.let {
+            Log.d("Main",it.toString())
+        }
+
         setContent {
             GestureFyTheme {
                 // A surface container using the 'background' color from the theme
@@ -48,16 +43,42 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Root()
+                    Root(
+                        onAuthorize = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.Builder()
+                                    .scheme("https")
+                                    .authority("accounts.spotify.com")
+                                    .appendPath("authorize")
+                                    .appendQueryParameter("response_type","code")
+                                    .appendQueryParameter("client_id", BuildConfig.CLIENT_ID)
+                                    .appendQueryParameter("scope", "streaming")
+                                    .appendQueryParameter("redirect_uri",BuildConfig.REDIRECT_URI)
+                                    .appendQueryParameter("state",UUID.randomUUID().toString())
+                                    .build()
+                            )
+                            startActivity(intent)
+                        },
+                        data = data
+                    )
                 }
             }
         }
     }
+
+
 }
 
 @Composable
-fun Root(){
+fun Root(
+    onAuthorize:()->Unit,
+    data:Uri?
+){
     val authorizationViewModel = hiltViewModel<AuthorizationViewModel>()
+    data?.let {
+
+    }
     authorizationViewModel.state.value.let {
         if(it.isLoading) {
             Column {
@@ -65,10 +86,13 @@ fun Root(){
             }
         } else {
 
-            if(it.authData != null && it.authData.expiresIn != 0){
+            if(it.isLoggedIn){
                 HomeScreen()
             } else {
-                AuthorizationScreen(authorizationViewModel)
+                AuthorizationScreen(
+                    authorizationViewModel,
+                    onAuthorize = onAuthorize
+                )
             }
 
         }

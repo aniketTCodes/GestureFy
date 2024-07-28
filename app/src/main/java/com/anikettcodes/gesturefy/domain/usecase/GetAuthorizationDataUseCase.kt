@@ -14,11 +14,11 @@ class GetAuthorizationDataUseCase @Inject constructor(
     private val repository: GestureFyRepository
 ) {
 
-    suspend operator fun invoke(): Flow<Resource<AuthorizationPreference>> = flow {
+    suspend operator fun invoke(): Flow<Resource<Boolean>> = flow {
         emit(Resource.Loading())
         try{
-            repository.getAuthorizationData().collect{
-                emit(Resource.Success(data = it))
+            repository.isAuthorized().collect{
+                emit(Resource.Success(it))
             }
         } catch(e:Exception){
             emit(Resource.Error(message = "Error reading authorization token"))

@@ -1,13 +1,12 @@
-package com.anikettcodes.gesturefy.presentation
+package com.anikettcodes.gesturefy.presentation.viewmodel
 
+import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.anikettcodes.gesturefy.datastore.AuthorizationPreference
 import com.anikettcodes.gesturefy.domain.usecase.GetAuthorizationDataUseCase
 import com.anikettcodes.gesturefy.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,7 +18,7 @@ class AuthorizationViewModel @Inject constructor(
     private val _state = mutableStateOf<AuthorizationState>(
         AuthorizationState(
             isLoading = false,
-            authData = null,
+            isLoggedIn = false,
             errorMessage = null
         )
     )
@@ -36,17 +35,21 @@ class AuthorizationViewModel @Inject constructor(
                         _state.value = _state.value.copy(isLoading = true)
                     }
                     is Resource.Success -> {
-                        _state.value = _state.value.copy(isLoading = false,authData = it.data)
+                        _state.value = _state.value.copy(isLoading = false, isLoggedIn = it.data!!)
                     }
                 }
             }
         }
     }
 
+    fun authorizeUsingCode(data: Uri){
+
+    }
+
 }
 
 data class AuthorizationState(
     val isLoading:Boolean,
-    val authData:AuthorizationPreference?,
+    val isLoggedIn:Boolean,
     val errorMessage:String?
 )

@@ -6,6 +6,7 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
 import com.anikettcodes.gesturefy.data.datasource.local.AuthorizationPreferenceSerializer
 import com.anikettcodes.gesturefy.data.datasource.local.LocalDatasource
+import com.anikettcodes.gesturefy.data.datasource.remote.SpotifyApi
 import com.anikettcodes.gesturefy.data.repository.GestureFyRepositoryImpl
 import com.anikettcodes.gesturefy.datastore.AuthorizationPreference
 import com.anikettcodes.gesturefy.domain.repository.GestureFyRepository
@@ -15,6 +16,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 
@@ -39,7 +42,17 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun gestureFyRepositoryProvider(datasource: LocalDatasource):GestureFyRepository = GestureFyRepositoryImpl(datasource)
+    fun spotifyApiProvider():SpotifyApi = Retrofit.Builder()
+        .baseUrl("https://api.spotify.com/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(SpotifyApi::class.java)
+
+    @Provides
+    @Singleton
+    fun gestureFyRepositoryProvider(datasource: LocalDatasource,remoteDataSource:SpotifyApi):GestureFyRepository = GestureFyRepositoryImpl(
+        datasource,remoteDataSource
+    )
 
     @Provides
     @Singleton
