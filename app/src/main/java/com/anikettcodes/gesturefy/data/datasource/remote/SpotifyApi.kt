@@ -4,11 +4,14 @@ import com.anikettcodes.gesturefy.data.model.AccessTokenModel
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.Header
+import retrofit2.http.Headers
 import retrofit2.http.POST
 
 interface SpotifyApi {
 
+
     @FormUrlEncoded
+    @Headers("Content-Type: application/x-www-form-urlencoded")
     @POST("https://accounts.spotify.com/api/token")
     suspend fun requestAccessToken(
         @Field("code") code:String,

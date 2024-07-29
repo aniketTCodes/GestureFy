@@ -10,6 +10,7 @@ import com.anikettcodes.gesturefy.data.datasource.remote.SpotifyApi
 import com.anikettcodes.gesturefy.data.repository.GestureFyRepositoryImpl
 import com.anikettcodes.gesturefy.datastore.AuthorizationPreference
 import com.anikettcodes.gesturefy.domain.repository.GestureFyRepository
+import com.anikettcodes.gesturefy.domain.usecase.AuthorizeSpotifyUseCase
 import com.anikettcodes.gesturefy.domain.usecase.GetAuthorizationDataUseCase
 import dagger.Module
 import dagger.Provides
@@ -58,4 +59,7 @@ object AppModule {
     @Singleton
     fun authorizationDataUseCaseProvider(repository:GestureFyRepository):GetAuthorizationDataUseCase = GetAuthorizationDataUseCase(repository)
 
+    @Provides
+    @Singleton
+    fun authorizeSpotifyUseCase(repository: GestureFyRepository):AuthorizeSpotifyUseCase = AuthorizeSpotifyUseCase(repository)
 }

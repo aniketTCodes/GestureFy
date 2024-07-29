@@ -22,21 +22,29 @@ import javax.inject.Inject
 ) : GestureFyRepository {
 
 
+    private var accessToken: String? = null
+    private var refreshToken: String? = null
+
+
      override suspend fun isAuthorized(): Flow<Boolean> = localDatasource.getAuthorizationData().map {
+         accessToken = it.accessToken
+         refreshToken = it.refreshToken
          it.accessToken.isNotBlank()
      }
 
       @RequiresApi(Build.VERSION_CODES.O)
-      override suspend fun authorize(data: Uri) {
-
+      override suspend fun authorize(data: Uri):Boolean{
+          Log.e(TAG,"Authorize Function called")
           try{
 
               val authorizationCode:String? = data.getQueryParameter("code")
               val error:String? = data.getQueryParameter("error")
-              val authHeaderString = "Basic ${BuildConfig.CLIENT_ID}:${BuildConfig.CLIENT_SECRET}"
+              val authHeaderString = "${BuildConfig.CLIENT_ID}:${BuildConfig.CLIENT_SECRET}"
+              val encodedAuthHeader = Base64.getEncoder().encodeToString(authHeaderString.toByteArray())
 
               if(error != null){
                   throw Exception(error)
+
               }
 
               if(authorizationCode == null){
@@ -46,8 +54,8 @@ import javax.inject.Inject
               val requestAccessTokenResult:AccessTokenModel = remoteDatasource.requestAccessToken(
                   code = authorizationCode,
                   redirectUri = BuildConfig.REDIRECT_URI,
-                  grantType = "Authorization",
-                  authHeader = Base64.getEncoder().encodeToString(authHeaderString.toByteArray())
+                  grantType = "authorization_code",
+                  authHeader = "Basic $encodedAuthHeader"
               )
 
               localDatasource.storeAuthorizationCode(
@@ -56,15 +64,17 @@ import javax.inject.Inject
                   requestAccessTokenResult.refreshToken
               )
 
+              return true;
+
           } catch (e: Exception){
               Log.e(TAG,e.message?:"Unknown Error")
+              throw e
           }
-
       }
 
       companion object {
 
-          const val TAG = "GestureFy Repository"
+          const val TAG = "GestureFy_Repository"
 
       }
 

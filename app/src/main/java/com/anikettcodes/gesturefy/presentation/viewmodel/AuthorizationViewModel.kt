@@ -4,15 +4,19 @@ import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anikettcodes.gesturefy.domain.usecase.AuthorizeSpotifyUseCase
 import com.anikettcodes.gesturefy.domain.usecase.GetAuthorizationDataUseCase
 import com.anikettcodes.gesturefy.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthorizationViewModel @Inject constructor(
-    private val authorizationDataUseCase: GetAuthorizationDataUseCase
+    private val authorizationDataUseCase: GetAuthorizationDataUseCase,
+    private val authorizeSpotifyUseCase: AuthorizeSpotifyUseCase
 ):ViewModel() {
 
     private val _state = mutableStateOf<AuthorizationState>(
@@ -25,6 +29,10 @@ class AuthorizationViewModel @Inject constructor(
     val state = _state
 
     init {
+        getLoggedUserData()
+    }
+
+    private fun getLoggedUserData(){
         viewModelScope.launch {
             authorizationDataUseCase().collect{
                 when(it){
@@ -43,7 +51,12 @@ class AuthorizationViewModel @Inject constructor(
     }
 
     fun authorizeUsingCode(data: Uri){
+        viewModelScope.launch {
 
+            authorizeSpotifyUseCase(data)
+
+
+        }
     }
 
 }

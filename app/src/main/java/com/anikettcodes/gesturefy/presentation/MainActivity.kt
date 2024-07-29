@@ -14,6 +14,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.anikettcodes.gesturefy.BuildConfig
@@ -75,10 +79,17 @@ fun Root(
     onAuthorize:()->Unit,
     data:Uri?
 ){
+    var isAuthorizationCalled by rememberSaveable {
+        mutableStateOf(false)
+    }
     val authorizationViewModel = hiltViewModel<AuthorizationViewModel>()
     data?.let {
-
+        if(!isAuthorizationCalled){
+            authorizationViewModel.authorizeUsingCode(it)
+            isAuthorizationCalled = true
+        }
     }
+
     authorizationViewModel.state.value.let {
         if(it.isLoading) {
             Column {
