@@ -20,4 +20,14 @@ interface SpotifyApi {
         @Header("Authorization") authHeader:String
     ):AccessTokenModel
 
+    @FormUrlEncoded
+    @Headers("Content-Type: application/x-www-form-urlencoded")
+    @POST("https://accounts.spotify.com/api/token")
+    suspend fun requestRefreshToken(
+        @Field("grant_type") grantType: String,
+        @Field("refresh_token") refreshToken: String,
+        @Field("client_id") clientId: String,
+        @Header("Authorization") authHeader:String
+    ):AccessTokenModel
+
 }

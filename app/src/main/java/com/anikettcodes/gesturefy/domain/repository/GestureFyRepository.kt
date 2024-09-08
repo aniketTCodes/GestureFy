@@ -11,4 +11,6 @@ interface GestureFyRepository {
 
     suspend fun authorize(data: Uri):Boolean
 
+    suspend fun refreshToken()
+
 }

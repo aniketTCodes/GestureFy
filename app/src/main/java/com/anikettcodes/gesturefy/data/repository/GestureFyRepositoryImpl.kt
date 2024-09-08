@@ -22,13 +22,12 @@ import javax.inject.Inject
 ) : GestureFyRepository {
 
 
-    private var accessToken: String? = null
-    private var refreshToken: String? = null
+    private var accessToken: String = ""
+    private var refreshToken: String = ""
 
 
      override suspend fun isAuthorized(): Flow<Boolean> = localDatasource.getAuthorizationData().map {
-         accessToken = it.accessToken
-         refreshToken = it.refreshToken
+         setTokens(it.accessToken,it.refreshToken)
          it.accessToken.isNotBlank()
      }
 
@@ -70,6 +69,25 @@ import javax.inject.Inject
               Log.e(TAG,e.message?:"Unknown Error")
               throw e
           }
+      }
+
+
+       override suspend fun refreshToken(){
+          try{
+              val authHeader =
+          }
+      }
+
+      private fun setTokens(newAccessToken: String, newRefreshToken: String){
+          if(newAccessToken != accessToken || newRefreshToken != refreshToken){
+              accessToken = newAccessToken
+              refreshToken = newRefreshToken
+              Log.d(TAG, "Tokens updated")
+          }
+      }
+
+      public fun getAccessToken():String{
+          return accessToken
       }
 
       companion object {
