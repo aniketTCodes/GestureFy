@@ -8,17 +8,20 @@ import retrofit2.http.Headers
 import retrofit2.http.POST
 
 interface SpotifyAuthorizationApi {
+
     @FormUrlEncoded
     @Headers("Content-Type: application/x-www-form-urlencoded")
+    @POST("token")
     suspend fun requestAccessToken(
         @Field("code") code:String,
-        @Field("redirect_uri") redirectUri:String,
+         @Field("redirect_uri") redirectUri:String,
         @Field("grant_type") grantType:String,
         @Header("Authorization") authHeader:String
     ):TokenEntity
 
     @FormUrlEncoded
     @Headers("Content-Type: application/x-www-form-urlencoded")
+    @POST("token")
     suspend fun requestRefreshToken(
         @Field("grant_type") grantType: String,
         @Field("refresh_token") refreshToken: String,
