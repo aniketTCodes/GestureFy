@@ -32,12 +32,20 @@ import com.anikettcodes.gesturefy.presentation.screens.AuthorizationScreen
 import com.anikettcodes.gesturefy.presentation.screens.HomeScreen
 import com.anikettcodes.gesturefy.presentation.ui.theme.GestureFyTheme
 import com.anikettcodes.gesturefy.presentation.viewmodels.AuthorizationViewmodel
+import com.spotify.android.appremote.api.ConnectionParams
+import com.spotify.android.appremote.api.Connector
+import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.types.Track
+import com.spotify.sdk.android.auth.AuthorizationClient
+import com.spotify.sdk.android.auth.AuthorizationRequest
+import com.spotify.sdk.android.auth.AuthorizationResponse
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var spotifyAppRemote:SpotifyAppRemote? = null
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,27 +60,50 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    root(data = data){
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.Builder()
-                                .scheme("https")
-                                .authority("accounts.spotify.com")
-                                .appendPath("authorize")
-                                .appendQueryParameter("response_type","code")
-                                .appendQueryParameter("client_id", BuildConfig.CLIENT_ID)
-                                .appendQueryParameter("scope", "streaming")
-                                .appendQueryParameter("redirect_uri",BuildConfig.REDIRECT_URI)
-                                .appendQueryParameter("state", UUID.randomUUID().toString())
+                    root(
+                        data = data,
+                        onLogIn = {
+                            val connectionParam = ConnectionParams.Builder(BuildConfig.CLIENT_ID)
+                                .setRedirectUri(BuildConfig.REDIRECT_URI)
                                 .build()
+
+                            SpotifyAppRemote.connect(this,connectionParam, object : Connector.ConnectionListener{
+                                override fun onConnected(p0: SpotifyAppRemote?) {
+                                    spotifyAppRemote = p0
+                                    connected()
+                                }
+
+                                override fun onFailure(p0: Throwable?) {
+                                    Log.e(TAG,p0?.message?:"Could not connect to spotify")
+                                }
+                            })
+                        }
+                    ){
+                        val authorizationBuilder = AuthorizationRequest.Builder(BuildConfig.CLIENT_ID,AuthorizationResponse.Type.CODE,BuildConfig.REDIRECT_URI)
+                        authorizationBuilder.setScopes(
+                            arrayOf("app-remote-control")
                         )
-                        startActivity(intent)
+
+                        AuthorizationClient.openLoginInBrowser(this,authorizationBuilder.build())
+
                     }
                 }
             }
         }
     }
 
+    private fun connected() {
+        spotifyAppRemote?.let {
+            // Play a playlist
+            val playlistURI = "spotify:playlist:37i9dQZF1DX2sUQwD7tbmL"
+            // Subscribe to PlayerState
+            it.playerApi.subscribeToPlayerState().setEventCallback {
+                val track: Track = it.track
+                Log.d("MainActivity", track.name + " by " + track.artist.name)
+            }
+        }
+
+    }
     companion object{
         const val TAG = "MAIN_ACTIVITY"
     }
@@ -82,7 +113,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun root(
     data:Uri?,
-    connectSpotify:()->Unit
+    onLogIn:()->Unit,
+    connectSpotify:()->Unit,
 ){
     var authorizationCalled by rememberSaveable{
         mutableStateOf(false)
@@ -97,6 +129,7 @@ fun root(
         Text(text = "Loading...")
     }
     else if(authorizationViewModel.state.value.isLoggedIn){
+        onLogIn()
         HomeScreen()
     }
     else{

@@ -32,7 +32,7 @@ class AuthorizationViewmodel @Inject constructor(
     val state = _state
 
     init {
-        _state.value = _state.value.copy(isLoggedIn = authorizationUseCase())
+        _state.value = _state.value.copy(isLoggedIn = false)
     }
 
 
@@ -46,7 +46,7 @@ class AuthorizationViewmodel @Inject constructor(
                         is Resource.Success -> {
                             _state.value = _state.value.copy(isLoggedIn = authorizationUseCase(), isLoading = false)
                         }
-
+{
                         is Resource.Error -> {
                             _state.value = _state.value.copy(isLoading = false, errorMessage = it.message)
                         }
