@@ -1,6 +1,5 @@
 package com.anikettcodes.gesturefy.presentation.activities
 
-import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -14,24 +13,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.anikettcodes.gesturefy.BuildConfig
-import com.anikettcodes.gesturefy.presentation.destinations.Destination
 import com.anikettcodes.gesturefy.presentation.screens.AuthorizationScreen
 import com.anikettcodes.gesturefy.presentation.screens.HomeScreen
 import com.anikettcodes.gesturefy.presentation.ui.theme.GestureFyTheme
 import com.anikettcodes.gesturefy.presentation.viewmodels.AuthorizationViewmodel
+import com.anikettcodes.gesturefy.presentation.viewmodels.HomeViewmodel
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
@@ -40,8 +33,6 @@ import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.UUID
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -60,8 +51,16 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val homeViewmodel = hiltViewModel<HomeViewmodel>()
                     root(
                         data = data,
+                        homeViewmodel = homeViewmodel,
+                        onNext = {
+                            spotifyAppRemote?.playerApi?.skipNext()
+                        },
+                        onPrev = {
+                            spotifyAppRemote?.playerApi?.skipPrevious()
+                        },
                         onLogIn = {
                             val connectionParam = ConnectionParams.Builder(BuildConfig.CLIENT_ID)
                                 .setRedirectUri(BuildConfig.REDIRECT_URI)
@@ -70,7 +69,7 @@ class MainActivity : ComponentActivity() {
                             SpotifyAppRemote.connect(this,connectionParam, object : Connector.ConnectionListener{
                                 override fun onConnected(p0: SpotifyAppRemote?) {
                                     spotifyAppRemote = p0
-                                    connected()
+                                    connected(homeViewmodel)
                                 }
 
                                 override fun onFailure(p0: Throwable?) {
@@ -92,14 +91,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun connected() {
+    private fun connected(viewmodel: HomeViewmodel) {
         spotifyAppRemote?.let {
             // Play a playlist
             val playlistURI = "spotify:playlist:37i9dQZF1DX2sUQwD7tbmL"
             // Subscribe to PlayerState
             it.playerApi.subscribeToPlayerState().setEventCallback {
-                val track: Track = it.track
-                Log.d("MainActivity", track.name + " by " + track.artist.name)
+                viewmodel.updateTrackState(it.track.name,it.track.artist.name)
             }
         }
 
@@ -113,6 +111,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun root(
     data:Uri?,
+    homeViewmodel: HomeViewmodel,
+    onNext:()->Unit,
+    onPrev:()->Unit,
     onLogIn:()->Unit,
     connectSpotify:()->Unit,
 ){
@@ -130,9 +131,15 @@ fun root(
     }
     else if(authorizationViewModel.state.value.isLoggedIn){
         onLogIn()
-        HomeScreen()
+
+        HomeScreen(
+            trackName = homeViewmodel.state.value.trackName,
+            artistName = homeViewmodel.state.value.artistName,
+            onNext = onNext,
+            onPrev = onPrev
+        )
     }
-    else{
+    else{ 
         AuthorizationScreen {
             connectSpotify()
         }
