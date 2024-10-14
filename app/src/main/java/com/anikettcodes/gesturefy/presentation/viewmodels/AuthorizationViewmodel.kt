@@ -46,7 +46,6 @@ class AuthorizationViewmodel @Inject constructor(
                         is Resource.Success -> {
                             _state.value = _state.value.copy(isLoggedIn = authorizationUseCase(), isLoading = false)
                         }
-
                         is Resource.Error -> {
                             _state.value = _state.value.copy(isLoading = false, errorMessage = it.message)
                         }

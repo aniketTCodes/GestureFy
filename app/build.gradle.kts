@@ -78,6 +78,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.navigation:navigation-compose:2.8.1")
+    implementation(files("module/spotify-app-remote-release-0.8.0.aar"))
     testImplementation("junit:junit:4.13.2")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
@@ -95,11 +96,12 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
 
     implementation("com.spotify.android:auth:1.2.5")
-
+    implementation("com.spotify.android:auth:1.2.5")
     implementation("androidx.datastore:datastore:1.0.0")
     implementation("com.google.protobuf:protobuf-javalite:3.21.11")
     implementation("com.google.protobuf:protobuf-kotlin-lite:3.21.11")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
 
 protobuf {
