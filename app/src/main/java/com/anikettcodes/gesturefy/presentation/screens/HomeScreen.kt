@@ -4,17 +4,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.anikettcodes.gesturefy.presentation.viewmodels.HomeState
+import com.spotify.android.appremote.api.SpotifyAppRemote
 
 @Composable
-fun HomeScreen(trackName: String, artistName: String,onNext:()->Unit,onPrev:()->Unit) {
+fun HomeScreen(
+    homeState: HomeState,
+    spotifyAppRemote: SpotifyAppRemote?
+) {
    Column {
-       Text(text = trackName)
-       Text(text = artistName)
-       Button(onClick = onNext) {
+       Text(text = homeState.trackName)
+       Text(text = homeState.artistName)
+       Button(onClick = {spotifyAppRemote?.playerApi?.skipNext()} ) {
            Text(text = "Next")
        }
 
-       Button(onClick = onPrev) {
+       Button(onClick = {spotifyAppRemote?.playerApi?.skipPrevious()}) {
            Text(text = "Prev")
        }
    } 
