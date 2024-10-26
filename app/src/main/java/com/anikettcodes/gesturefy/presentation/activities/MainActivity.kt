@@ -11,6 +11,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.camera.core.CameraSelector
+import androidx.camera.view.CameraController
+import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -90,7 +93,11 @@ class MainActivity : ComponentActivity() {
                         val homeViewmodel = hiltViewModel<HomeViewmodel>()
                         //setup spotify remote
                         initializeSpotifyAppRemote(homeViewmodel)
-                        HomeScreen(homeState = homeViewmodel.state.value, spotifyAppRemote = spotifyAppRemote)
+                        val cameraController = LifecycleCameraController(applicationContext).apply {
+                            setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
+                            cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+                        }
+                        HomeScreen(homeState = homeViewmodel.state.value, spotifyAppRemote = spotifyAppRemote, controller = cameraController)
                     }
                     else   {
                         AuthorizationScreen {
