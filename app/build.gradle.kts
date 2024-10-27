@@ -104,7 +104,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 
     //GESTURE RECOGNITION MODEL
-    implementation("com.google.mediapipe:tasks-vision:latest.release")
+    implementation("com.google.mediapipe:tasks-vision:0.10.14")
 
     //CAMERA X
     val camerax_version = "1.3.4"
