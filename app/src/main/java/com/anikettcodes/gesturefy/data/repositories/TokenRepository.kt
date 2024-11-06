@@ -20,7 +20,9 @@ class TokenRepository @Inject constructor(
     private val spotifyAuthorizationApi: SpotifyAuthorizationApi
 ) {
 
-    fun isTokenSaved():Boolean = sharedPrefs.getString(ACCESS_TOKEN_KEY,null) != null
+    fun isTokenSaved():Boolean{val token = sharedPrefs.getString(ACCESS_TOKEN_KEY,null)
+        Log.d(TAG,token?:"Null")
+        return token != null}
 
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun getAccessToken():String{

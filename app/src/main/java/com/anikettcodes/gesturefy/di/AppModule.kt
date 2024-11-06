@@ -4,9 +4,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.anikettcodes.gesturefy.data.datasource.remote.SpotifyAuthorizationApi
 import com.anikettcodes.gesturefy.data.repositories.GesturefyRepository
+import com.anikettcodes.gesturefy.data.repositories.SpotifyAppRemoteRepository
 import com.anikettcodes.gesturefy.data.repositories.TokenRepository
+import com.anikettcodes.gesturefy.data.service.SpotifyAppRemoteService
 import com.anikettcodes.gesturefy.domain.usecases.AuthorizationUseCase
 import com.anikettcodes.gesturefy.domain.usecases.LoginUseCase
+import com.anikettcodes.gesturefy.domain.usecases.PlayerStateUseCase
 import com.anikettcodes.gesturefy.utils.PREFS_TOKEN_FILE
 import dagger.Module
 import dagger.Provides
@@ -22,6 +25,21 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+
+    @Provides
+    @Singleton
+    fun playerStateUseCaseProvider(spotifyAppRemoteRepository: SpotifyAppRemoteRepository):PlayerStateUseCase =
+        PlayerStateUseCase(spotifyAppRemoteRepository)
+
+    @Provides
+    @Singleton
+    fun spotifyAppRemoteServiceProvider(@ApplicationContext context: Context):SpotifyAppRemoteService =
+        SpotifyAppRemoteService(context)
+
+    @Provides
+    @Singleton
+    fun spotifyAppRemoteRepositoryProvider(spotifyAppRemoteService: SpotifyAppRemoteService):SpotifyAppRemoteRepository=
+        SpotifyAppRemoteRepository(spotifyAppRemoteService)
 
     @Provides
     @Singleton

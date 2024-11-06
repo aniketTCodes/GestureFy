@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,6 +33,10 @@ import com.anikettcodes.gesturefy.presentation.screens.AuthorizationScreen
 import com.anikettcodes.gesturefy.presentation.screens.HomeScreen
 import com.anikettcodes.gesturefy.presentation.ui.theme.GestureFyTheme
 import com.anikettcodes.gesturefy.presentation.viewmodels.AuthorizationViewmodel
+import com.anikettcodes.gesturefy.presentation.viewmodels.HomeViewmodel
+import com.spotify.sdk.android.auth.AuthorizationClient
+import com.spotify.sdk.android.auth.AuthorizationRequest
+import com.spotify.sdk.android.auth.AuthorizationResponse
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
@@ -41,10 +46,7 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val data: Uri? = intent?.data
-        data?.let {
-            Log.d(TAG,it.toString())
-        }
+        var data: Uri? = intent?.data
         setContent {
             GestureFyTheme {
                 // A surface container using the 'background' color from the theme
@@ -52,22 +54,34 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    root(data = data){
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.Builder()
-                                .scheme("https")
-                                .authority("accounts.spotify.com")
-                                .appendPath("authorize")
-                                .appendQueryParameter("response_type","code")
-                                .appendQueryParameter("client_id", BuildConfig.CLIENT_ID)
-                                .appendQueryParameter("scope", "streaming")
-                                .appendQueryParameter("redirect_uri",BuildConfig.REDIRECT_URI)
-                                .appendQueryParameter("state", UUID.randomUUID().toString())
-                                .build()
-                        )
-                        startActivity(intent)
+                    val authorizationViewmodel = hiltViewModel<AuthorizationViewmodel>()
+                    if(data != null){
+                        authorizationViewmodel.authorizeUser(data!!)
+                        data = null
                     }
+                    if(authorizationViewmodel.state.value.isLoading){
+                        Column {
+                            Text("Loading")
+                        }
+                    }
+                    else if(authorizationViewmodel.state.value.isLoggedIn){
+                      HomeScreen()
+                    }
+                    else{
+                        AuthorizationScreen {
+                            AuthorizationClient.openLoginInBrowser(
+                                this,
+                                AuthorizationRequest.Builder(
+                                    BuildConfig.CLIENT_ID,
+                                    AuthorizationResponse.Type.CODE,
+                                    BuildConfig.REDIRECT_URI
+                                )
+                                    .setScopes(arrayOf("app-remote-control"))
+                                    .build()
+                            )
+                        }
+                    }
+
                 }
             }
         }
@@ -78,30 +92,3 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun root(
-    data:Uri?,
-    connectSpotify:()->Unit
-){
-    var authorizationCalled by rememberSaveable{
-        mutableStateOf(false)
-    }
-    val navController = rememberNavController()
-    val authorizationViewModel = hiltViewModel<AuthorizationViewmodel>()
-    if(data != null && !authorizationCalled){
-        authorizationViewModel.authorizeUser(data)
-        authorizationCalled = true
-    }
-    if(authorizationViewModel.state.value.isLoading){
-        Text(text = "Loading...")
-    }
-    else if(authorizationViewModel.state.value.isLoggedIn){
-        HomeScreen()
-    }
-    else{
-        AuthorizationScreen {
-            connectSpotify()
-        }
-    }
-}
