@@ -43,7 +43,9 @@ private val gestureFyColorScheme = darkColorScheme(
     onPrimary = SpotifyGreen,
     secondary = Color.White,
     surface = GestureFySurface,
-    background = BackgroundGreen
+    background = BackgroundGreen,
+    error = Color.Red,
+    onError = Color.White
 )
 
 @Composable

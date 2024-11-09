@@ -45,6 +45,7 @@ import okhttp3.internal.wait
 @Composable
 fun AuthorizationScreen(
     isSpotifyInstalled:Boolean,
+    onClick:()->Unit
 ){
     Column(
         modifier = Modifier
@@ -65,8 +66,9 @@ fun AuthorizationScreen(
 
             )
         Column(
+            verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(20.dp)
         ) {
             
@@ -86,7 +88,7 @@ fun AuthorizationScreen(
                         color = SpotifyGreen,
                         shape = RoundedCornerShape(size = 50.dp)
                     ),
-                onClick = { /*TODO*/ })
+                onClick = onClick)
             {
                Row (
                    verticalAlignment = Alignment.CenterVertically,
@@ -139,8 +141,10 @@ fun AuthorizationScreen(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = false)
 @Composable
 fun AuthorizationScreenPreview(){
-    AuthorizationScreen(isSpotifyInstalled = true)
+    AuthorizationScreen(isSpotifyInstalled = true){
+
+    }
 }

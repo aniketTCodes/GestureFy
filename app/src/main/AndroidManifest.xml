@@ -20,6 +20,14 @@
             android:theme="@style/Theme.GestureFy">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.LAUNCHER" />
+
+                <data
+                    android:host="callback"
+                    android:scheme="gesturefy" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
