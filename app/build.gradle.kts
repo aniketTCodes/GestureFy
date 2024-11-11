@@ -115,6 +115,13 @@ dependencies {
     implementation("androidx.camera:camera-view:1.3.4")
     implementation("androidx.camera:camera-camera2:1.3.4")
 
+    //Notification bar color
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.30.1")
+
+    //Glassmorphic effect
+    implementation("dev.chrisbanes.haze:haze:1.0.0")
+
+
 }
 
 protobuf {

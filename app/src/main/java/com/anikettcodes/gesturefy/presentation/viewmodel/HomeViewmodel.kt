@@ -3,11 +3,14 @@ package com.anikettcodes.gesturefy.presentation.viewmodel
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.anikettcodes.gesturefy.domain.usecase.PlaybackControlUsecase
 import com.anikettcodes.gesturefy.domain.usecase.PlayerStateUsecase
+import com.anikettcodes.gesturefy.presentation.ui.theme.BackgroundGreen
+import com.anikettcodes.gesturefy.presentation.ui.theme.GestureFySurface
 import com.anikettcodes.gesturefy.util.Resource
 import com.spotify.protocol.types.PlayerState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +24,7 @@ class HomeViewmodel @Inject constructor(
     private val playbackControlUsecase: PlaybackControlUsecase
 ) : ViewModel() {
     private val _state = mutableStateOf(
-        HomeState(null,null)
+        HomeState(null,null, BackgroundGreen)
     )
 
     val state = _state
@@ -40,5 +43,6 @@ class HomeViewmodel @Inject constructor(
 
 data class HomeState(
     val playerState:PlayerState?,
-    val errorMessage:String?
+    val errorMessage:String?,
+    val backgroundColor:Color
 )
