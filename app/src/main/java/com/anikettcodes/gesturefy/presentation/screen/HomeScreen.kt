@@ -7,6 +7,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -38,15 +40,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.createBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.anikettcodes.gesturefy.presentation.viewmodel.HomeViewmodel
 import com.anikettcodes.gesturefy.R
@@ -97,6 +102,7 @@ fun HomeScreen(){
                         .padding(20.dp)
                 ) {
                     Box (
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .border(
                                 BorderStroke(1.dp, color = Color(0x25FFFFFF)),
@@ -118,9 +124,33 @@ fun HomeScreen(){
                                     center = Offset.Infinite
                                 )
                             )
-                            .padding(40.dp)
+                            .padding(4.dp)
+
                     ){
-                        GestureFyPlayer(state)
+
+                        if(state.playerState != null){
+                            var playBackPosition by rememberSaveable {
+                                mutableIntStateOf(0)
+                            }
+                            LaunchedEffect(
+                                key1 = state.playerState.isPaused,
+                                key2 = state.playerState.playbackPosition
+                            ) {
+                                playBackPosition = (state.playerState.playbackPosition / 1000).toInt()
+                                while (!state.playerState.isPaused) {
+                                    Log.d("HOME_SCREEN", playBackPosition.toString())
+                                    delay(1000)
+                                    playBackPosition++
+                                }
+                            }
+                            GesturefyPlayer(
+                                trackName = state.playerState.track.name,
+                                artistName = state.playerState.track.artist.name,
+                                trackLength = state.playerState.track.duration,
+                                playbackPosition = playBackPosition
+                            )
+                        }
+
                     }
 
                 }
@@ -129,60 +159,92 @@ fun HomeScreen(){
     }
 }
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GestureFyPlayer(state: HomeState) {
+fun GesturefyPlayer(
+    trackName:String,
+    artistName:String,
+    trackLength:Long,
+    playbackPosition:Int
+){
+
     Column(
-        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.extended_spotify_logo),
-            contentDescription = "Extended spotify logo",
-            modifier = Modifier.height(50.dp)
-        )
-        Spacer(modifier = Modifier.height(30.dp))
-        Image(
-            painter = painterResource(id = R.drawable.test_album_art),
-            contentDescription = "album art",
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier.size(300.dp)
-        )
-        if(state.playerState != null){
-            Spacer(modifier = Modifier.height(5.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.Red)
-            ) {
-                Text(text = state.playerState.track.artist.name, fontSize = 18.sp, color = Color.White)
-                Text(text = state.playerState.track.name, fontSize = 30.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
 
-                var playBackPosition by rememberSaveable {
-                    mutableIntStateOf(0)
-                }
-                LaunchedEffect(key1 = state.playerState.isPaused, key2 = state.playerState.playbackPosition) {
-                    playBackPosition = (state.playerState.playbackPosition/1000).toInt()
-                    while (!state.playerState.isPaused){
-                        Log.d("HOME_SCREEN",playBackPosition.toString())
-                        delay(1000)
-                        playBackPosition++
-                    }
-                }
-                Slider(value = playBackPosition.toFloat(),
-                    valueRange = 0f..(state.playerState.track.duration/1000).toFloat(),
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Image(
+                painter = painterResource(id = R.drawable.extended_spotify_logo),
+                contentDescription = "Extended spotify logo",
+                modifier = Modifier.height(50.dp)
+            )
+
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(20.dp)
+            ) {
+
+                    Image(
+                        painter = painterResource(id = R.drawable.test_album_art),
+                        contentDescription = "album art",
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier
+                            .size(350.dp)
+                            .padding(start = 4.dp, end = 4.dp)
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+
+                    Text(
+                        text = artistName,
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.Start)
+                            .padding(start = 4.dp)
+
+                    )
+                    Text(
+                        text = trackName,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.Start)
+                            .padding(start = 4.dp)
+                    )
+                Slider(
+                    value = (playbackPosition).toFloat(),
+                    valueRange = 0f..(trackLength / 1000).toFloat(),
                     onValueChange = {},
+                    track = {
+                        SliderDefaults.Track(
+                            sliderPositions = it,
+                            modifier = Modifier.height(1.dp),
+                            colors = SliderDefaults.colors(
+                                inactiveTickColor = Color.LightGray,
+                                activeTrackColor = Color.White,
+                            )
+                        )
+                    },
                     colors = SliderDefaults.colors(
                         thumbColor = Color.White,
                         activeTrackColor = Color.White,
-                        inactiveTickColor = Color.Gray,
+                        inactiveTrackColor = Color.LightGray,
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
+
             }
 
-        }
+
+
     }
+
 }
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -190,6 +252,6 @@ fun GestureFyPlayer(state: HomeState) {
 @Composable
 fun GestureFyPlayerPreview(){
     GestureFyTheme {
-        HomeScreen()
+        GesturefyPlayer(trackName = "Wishes", artistName = "Billie Eilish", trackLength = 4500, playbackPosition =  200)
     }
 }
