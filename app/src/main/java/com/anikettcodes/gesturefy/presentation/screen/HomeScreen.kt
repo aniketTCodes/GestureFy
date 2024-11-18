@@ -1,7 +1,10 @@
 package com.anikettcodes.gesturefy.presentation.screen
 
+import android.annotation.SuppressLint
+import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
+import android.widget.Space
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -11,6 +14,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +24,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -28,6 +35,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -44,19 +52,28 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.anikettcodes.gesturefy.presentation.viewmodel.HomeViewmodel
 import com.anikettcodes.gesturefy.R
+import com.anikettcodes.gesturefy.data.repository.PlayerOperation
 import com.anikettcodes.gesturefy.presentation.ui.theme.GestureFyTheme
+import com.anikettcodes.gesturefy.presentation.ui.theme.SpotifyGreen
 import com.anikettcodes.gesturefy.presentation.viewmodel.HomeState
+import com.spotify.protocol.types.Image
+import com.spotify.protocol.types.ImageUri
+import com.spotify.protocol.types.Repeat
+import com.spotify.protocol.types.Shuffle
 import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -72,7 +89,7 @@ fun HomeScreen(){
                 Snackbar(snackbarData = snackbarData, containerColor = Color.Red, contentColor = Color.White)
             }
         }
-    ) {
+    ) { it ->
         LaunchedEffect(state.errorMessage) {
             state.errorMessage?.let{
                 snackbarHostState.showSnackbar(message = state.errorMessage)
@@ -132,23 +149,32 @@ fun HomeScreen(){
                             var playBackPosition by rememberSaveable {
                                 mutableIntStateOf(0)
                             }
+                            var mutableInteractionSource = remember {
+                                MutableInteractionSource()
+                            }
                             LaunchedEffect(
                                 key1 = state.playerState.isPaused,
                                 key2 = state.playerState.playbackPosition
                             ) {
                                 playBackPosition = (state.playerState.playbackPosition / 1000).toInt()
                                 while (!state.playerState.isPaused) {
-                                    Log.d("HOME_SCREEN", playBackPosition.toString())
                                     delay(1000)
                                     playBackPosition++
                                 }
                             }
+
                             GesturefyPlayer(
                                 trackName = state.playerState.track.name,
                                 artistName = state.playerState.track.artist.name,
                                 trackLength = state.playerState.track.duration,
-                                playbackPosition = playBackPosition
-                            )
+                                playbackPosition = playBackPosition,
+                                isShuffleOn = state.playerState.playbackOptions.isShuffling,
+                                isRepeatOn = state.playerState.playbackOptions.repeatMode,
+                                isPaused = state.playerState.isPaused,
+                                albumArt = state.albumArt
+                            ) { playerOperation->
+                                homeViewmodel.performOperation(playerOperation)
+                            }
                         }
 
                     }
@@ -160,13 +186,19 @@ fun HomeScreen(){
 }
 
 
+@SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GesturefyPlayer(
+    albumArt:Bitmap?,
     trackName:String,
     artistName:String,
     trackLength:Long,
-    playbackPosition:Int
+    playbackPosition:Int,
+    isShuffleOn: Boolean,
+    isRepeatOn:Int,
+    isPaused:Boolean = false,
+    onPlayerOperation: (PlayerOperation)->Unit
 ){
 
     Column(
@@ -175,7 +207,7 @@ fun GesturefyPlayer(
         modifier = Modifier.fillMaxWidth()
     ) {
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier =  Modifier.height(20.dp))
 
         Image(
                 painter = painterResource(id = R.drawable.extended_spotify_logo),
@@ -183,12 +215,14 @@ fun GesturefyPlayer(
                 modifier = Modifier.height(50.dp)
             )
 
-
+        Spacer(modifier = Modifier.height(20.dp))
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(20.dp)
+                modifier = Modifier
+                    .padding(start = 20.dp, end = 20.dp)
+                    .fillMaxWidth()
             ) {
-
+                    if(albumArt == null){
                     Image(
                         painter = painterResource(id = R.drawable.test_album_art),
                         contentDescription = "album art",
@@ -196,7 +230,17 @@ fun GesturefyPlayer(
                         modifier = Modifier
                             .size(350.dp)
                             .padding(start = 4.dp, end = 4.dp)
+                    )}
+                else{
+                    androidx.compose.foundation.Image(
+                        bitmap = albumArt.asImageBitmap(),
+                        contentDescription = "Album art",
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier
+                            .size(350.dp)
+                            .padding(start = 4.dp, end = 4.dp)
                     )
+                    }
                     Spacer(modifier = Modifier.height(5.dp))
 
                     Text(
@@ -210,6 +254,8 @@ fun GesturefyPlayer(
                     )
                     Text(
                         text = trackName,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
@@ -217,28 +263,100 @@ fun GesturefyPlayer(
                             .align(Alignment.Start)
                             .padding(start = 4.dp)
                     )
-                Slider(
-                    value = (playbackPosition).toFloat(),
-                    valueRange = 0f..(trackLength / 1000).toFloat(),
-                    onValueChange = {},
-                    track = {
-                        SliderDefaults.Track(
-                            sliderPositions = it,
-                            modifier = Modifier.height(1.dp),
-                            colors = SliderDefaults.colors(
-                                inactiveTickColor = Color.LightGray,
-                                activeTrackColor = Color.White,
+                Spacer(modifier = Modifier.height(12.dp))
+                CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                    Slider(
+                        value = (playbackPosition).toFloat(),
+                        valueRange = 0f..(trackLength / 1000).toFloat(),
+                        onValueChange = {},
+                        track = {
+                            SliderDefaults.Track(
+                                sliderPositions = it,
+                                modifier = Modifier.height(1.dp),
+                                colors = SliderDefaults.colors(
+                                    inactiveTickColor = Color.LightGray,
+                                    activeTrackColor = Color.White,
+                                )
                             )
-                        )
-                    },
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color.White,
-                        activeTrackColor = Color.White,
-                        inactiveTrackColor = Color.LightGray,
-                    ),
+                        },
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color.White,
+                            activeTrackColor = Color.White,
+                            inactiveTrackColor = Color.LightGray,
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 0.dp)
+                    )
+                }
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp, start = 4.dp, end = 4.dp)
+                ) {
+                    val playbackPositionMin = playbackPosition/60
+                    val playbackPositionSec = playbackPosition%60
+                    val trackDuration = trackLength/1000
+                    val trackDurationMin = trackDuration/60
+                    val trackDurationSec = trackDuration%60
+                    Text(
+                        text = String.format("%2d:%02d",playbackPositionMin,playbackPositionSec),
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = String.format("%2d:%02d",trackDurationMin,trackDurationSec),
+                        fontSize = 12.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
-                )
+                ) {
+                    IconButton(onClick = {onPlayerOperation(PlayerOperation.TOGGLE_SHUFFLE)},modifier = Modifier.size(25.dp)) {
+                        Icon(
+                            painter = painterResource(R.drawable.baseline_shuffle_24),
+                            contentDescription = "Shuffle",
+                            tint = if(isShuffleOn) SpotifyGreen else Color.White,
+                            modifier = Modifier.size(25.dp),
+                        )
+                    }
+                    IconButton(onClick = { onPlayerOperation(PlayerOperation.PREV) },modifier = Modifier.size(40.dp)) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_skip_previous_24),
+                            contentDescription = "Skip previous",
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                    IconButton(onClick = {
+                        if(isPaused) onPlayerOperation(PlayerOperation.PLAY) else onPlayerOperation(PlayerOperation.PAUSE)
+                    },modifier = Modifier.size(50.dp)) {
+                        Icon(
+                            painter = painterResource(id = if(isPaused) R.drawable.baseline_play_circle_filled_24 else R.drawable.baseline_pause_circle_24),
+                            contentDescription = "play pause",
+                            modifier = Modifier.size(50.dp)
+                        )
+                    }
+                    IconButton(onClick = { onPlayerOperation(PlayerOperation.NEXT) },modifier = Modifier.size(40.dp)) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_skip_next_24),
+                            contentDescription = "Skip Next",
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                    IconButton(onClick = { onPlayerOperation(PlayerOperation.TOGGLE_REPEAT) },modifier = Modifier.size(25.dp)) {
+                        Icon(
+                            painter = painterResource(id = if(isRepeatOn == Repeat.OFF || isRepeatOn == Repeat.ALL) R.drawable.baseline_repeat_24 else R.drawable.baseline_repeat_one_24),
+                            contentDescription = "repeat",
+                            tint = if(isRepeatOn == Repeat.ALL || isRepeatOn == Repeat.ONE) SpotifyGreen else Color.White,
+                            modifier = Modifier.size(25.dp),
+                        )
+                    }
 
+                }
+                Spacer(modifier = Modifier.height(20.dp))
             }
 
 
@@ -252,6 +370,6 @@ fun GesturefyPlayer(
 @Composable
 fun GestureFyPlayerPreview(){
     GestureFyTheme {
-        GesturefyPlayer(trackName = "Wishes", artistName = "Billie Eilish", trackLength = 4500, playbackPosition =  200)
+        GesturefyPlayer(trackName = "Wishes", artistName = "Billie Eilish", trackLength = 4500, playbackPosition =  200, isShuffleOn = false, isRepeatOn = Repeat.ALL, albumArt = null){}
     }
 }

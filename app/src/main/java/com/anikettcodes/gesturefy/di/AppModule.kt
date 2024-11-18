@@ -3,6 +3,7 @@ package com.anikettcodes.gesturefy.di
 import android.content.Context
 import com.anikettcodes.gesturefy.data.repository.SpotifyAppRemoteRepository
 import com.anikettcodes.gesturefy.data.service.SpotifyAppRemoteService
+import com.anikettcodes.gesturefy.domain.usecase.AlbumArtUseCase
 import com.anikettcodes.gesturefy.domain.usecase.ConnectSpotifyAppRemoteUsecase
 import com.anikettcodes.gesturefy.domain.usecase.PlaybackControlUsecase
 import com.anikettcodes.gesturefy.domain.usecase.PlayerStateUsecase
@@ -44,4 +45,8 @@ class AppModule {
     @Singleton
     fun playbackControlUsecaseProvider(spotifyAppRemoteRepository: SpotifyAppRemoteRepository) =
         PlaybackControlUsecase(spotifyAppRemoteRepository)
+
+    @Provides
+    @Singleton
+    fun albumArtUseCaseProvider(spotifyAppRemoteRepository: SpotifyAppRemoteRepository) = AlbumArtUseCase(spotifyAppRemoteRepository)
 }
