@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -72,6 +73,7 @@ import com.anikettcodes.gesturefy.presentation.ui.theme.SpotifyGreen
 import com.anikettcodes.gesturefy.presentation.viewmodel.HomeState
 import com.spotify.protocol.types.Image
 import com.spotify.protocol.types.ImageUri
+import com.spotify.protocol.types.PlayerRestrictions
 import com.spotify.protocol.types.Repeat
 import com.spotify.protocol.types.Shuffle
 import kotlinx.coroutines.delay
@@ -145,12 +147,9 @@ fun HomeScreen(){
 
                     ){
 
-                        if(state.playerState != null){
+                        if(state.playerState?.track != null){
                             var playBackPosition by rememberSaveable {
                                 mutableIntStateOf(0)
-                            }
-                            var mutableInteractionSource = remember {
-                                MutableInteractionSource()
                             }
                             LaunchedEffect(
                                 key1 = state.playerState.isPaused,
@@ -171,7 +170,14 @@ fun HomeScreen(){
                                 isShuffleOn = state.playerState.playbackOptions.isShuffling,
                                 isRepeatOn = state.playerState.playbackOptions.repeatMode,
                                 isPaused = state.playerState.isPaused,
-                                albumArt = state.albumArt
+                                albumArt = state.albumArt,
+                                playerRestrictions = state.playerState.playbackRestrictions,
+                                onSeek = {
+                                    playBackPosition = it
+                                },
+                                onSeekFinish = {
+                                    homeViewmodel.seekTo(it)
+                                }
                             ) { playerOperation->
                                 homeViewmodel.performOperation(playerOperation)
                             }
@@ -198,6 +204,9 @@ fun GesturefyPlayer(
     isShuffleOn: Boolean,
     isRepeatOn:Int,
     isPaused:Boolean = false,
+    playerRestrictions: PlayerRestrictions,
+    onSeek:(Int)->Unit,
+    onSeekFinish:(Long)->Unit,
     onPlayerOperation: (PlayerOperation)->Unit
 ){
 
@@ -268,7 +277,13 @@ fun GesturefyPlayer(
                     Slider(
                         value = (playbackPosition).toFloat(),
                         valueRange = 0f..(trackLength / 1000).toFloat(),
-                        onValueChange = {},
+                        enabled = playerRestrictions.canSeek,
+                        onValueChange = {
+                            onSeek(it.toInt())
+                        },
+                        onValueChangeFinished = {
+                            onSeekFinish(playbackPosition.toLong() * 1000)
+                        },
                         track = {
                             SliderDefaults.Track(
                                 sliderPositions = it,
@@ -283,6 +298,7 @@ fun GesturefyPlayer(
                             thumbColor = Color.White,
                             activeTrackColor = Color.White,
                             inactiveTrackColor = Color.LightGray,
+                            disabledThumbColor = Color.DarkGray,
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -315,15 +331,25 @@ fun GesturefyPlayer(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    IconButton(onClick = {onPlayerOperation(PlayerOperation.TOGGLE_SHUFFLE)},modifier = Modifier.size(25.dp)) {
+                    IconButton(onClick = {
+                        if(isShuffleOn) onPlayerOperation(PlayerOperation.SHUFFLE_OFF) else onPlayerOperation(PlayerOperation.SHUFFLE_ON)
+                    }, enabled = playerRestrictions.canToggleShuffle,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            disabledContentColor = Color.DarkGray,
+                            contentColor = if(isShuffleOn) SpotifyGreen else Color.White),
+                        modifier = Modifier.size(25.dp)) {
                         Icon(
                             painter = painterResource(R.drawable.baseline_shuffle_24),
                             contentDescription = "Shuffle",
-                            tint = if(isShuffleOn) SpotifyGreen else Color.White,
                             modifier = Modifier.size(25.dp),
                         )
                     }
-                    IconButton(onClick = { onPlayerOperation(PlayerOperation.PREV) },modifier = Modifier.size(40.dp)) {
+                    IconButton(
+                        onClick = { onPlayerOperation(PlayerOperation.PREV) },
+                        enabled = playerRestrictions.canSkipPrev,
+                        colors = IconButtonDefaults.iconButtonColors(disabledContentColor = Color.DarkGray, contentColor = Color.White),
+                        modifier = Modifier.size(40.dp)
+                    ) {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_skip_previous_24),
                             contentDescription = "Skip previous",
@@ -332,25 +358,39 @@ fun GesturefyPlayer(
                     }
                     IconButton(onClick = {
                         if(isPaused) onPlayerOperation(PlayerOperation.PLAY) else onPlayerOperation(PlayerOperation.PAUSE)
-                    },modifier = Modifier.size(50.dp)) {
+                    },
+                        modifier = Modifier.size(50.dp)) {
                         Icon(
                             painter = painterResource(id = if(isPaused) R.drawable.baseline_play_circle_filled_24 else R.drawable.baseline_pause_circle_24),
                             contentDescription = "play pause",
                             modifier = Modifier.size(50.dp)
                         )
                     }
-                    IconButton(onClick = { onPlayerOperation(PlayerOperation.NEXT) },modifier = Modifier.size(40.dp)) {
+                    IconButton(onClick = { onPlayerOperation(PlayerOperation.NEXT) },
+                        enabled = playerRestrictions.canSkipNext,
+                        colors = IconButtonDefaults.iconButtonColors(disabledContentColor = Color.DarkGray, contentColor = Color.White),
+                        modifier = Modifier.size(40.dp)) {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_skip_next_24),
                             contentDescription = "Skip Next",
                             modifier = Modifier.size(40.dp)
                         )
                     }
-                    IconButton(onClick = { onPlayerOperation(PlayerOperation.TOGGLE_REPEAT) },modifier = Modifier.size(25.dp)) {
+                    IconButton(onClick = {
+                        when(isRepeatOn){
+                            Repeat.OFF -> onPlayerOperation(PlayerOperation.REPEAT_ONE)
+                            Repeat.ALL -> onPlayerOperation(PlayerOperation.REPEAT_OFF)
+                            Repeat.ONE -> onPlayerOperation(PlayerOperation.REPEAT_ALL)
+                        }
+                    },
+                        enabled = playerRestrictions.canRepeatTrack,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            disabledContentColor = Color.DarkGray,
+                            contentColor = if(isRepeatOn == Repeat.ONE || isRepeatOn == Repeat.ALL) SpotifyGreen else Color.White),
+                        modifier = Modifier.size(25.dp)) {
                         Icon(
                             painter = painterResource(id = if(isRepeatOn == Repeat.OFF || isRepeatOn == Repeat.ALL) R.drawable.baseline_repeat_24 else R.drawable.baseline_repeat_one_24),
                             contentDescription = "repeat",
-                            tint = if(isRepeatOn == Repeat.ALL || isRepeatOn == Repeat.ONE) SpotifyGreen else Color.White,
                             modifier = Modifier.size(25.dp),
                         )
                     }
@@ -365,11 +405,3 @@ fun GesturefyPlayer(
 
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
-@Preview
-@Composable
-fun GestureFyPlayerPreview(){
-    GestureFyTheme {
-        GesturefyPlayer(trackName = "Wishes", artistName = "Billie Eilish", trackLength = 4500, playbackPosition =  200, isShuffleOn = false, isRepeatOn = Repeat.ALL, albumArt = null){}
-    }
-}

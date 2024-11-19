@@ -20,6 +20,7 @@ import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.PlayerState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import okhttp3.Response
 import javax.inject.Inject
 
 
@@ -50,7 +51,6 @@ class HomeViewmodel @Inject constructor(
                             updateAlbumArt(null)
                         }
                         state.value = _state.value.copy(playerState = it.data)
-
                     }
                 }
             }
@@ -78,7 +78,7 @@ class HomeViewmodel @Inject constructor(
 
     private fun updateBackgroundColor(bitmap: Bitmap){
         val palette = Palette.Builder(bitmap).generate()
-        val swatch  = palette.darkVibrantSwatch
+        val swatch  = palette.vibrantSwatch
         if(swatch != null){
             _state.value = _state.value.copy(backgroundColor = Color(swatch.rgb))
         }
@@ -90,6 +90,13 @@ class HomeViewmodel @Inject constructor(
 
     fun performOperation(operation: PlayerOperation){
          playbackControlUsecase(operation)
+    }
+
+    fun seekTo(seekTo:Long){
+        val seekResult = playbackControlUsecase.seekTo(seekTo)
+        if(seekResult is Resource.Error){
+            _state.value = _state.value.copy(errorMessage = seekResult.message)
+        }
     }
 }
 
