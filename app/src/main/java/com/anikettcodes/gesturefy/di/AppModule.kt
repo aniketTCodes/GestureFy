@@ -1,10 +1,14 @@
 package com.anikettcodes.gesturefy.di
 
 import android.content.Context
+import com.anikettcodes.gesturefy.data.repository.GestureFyRepository
 import com.anikettcodes.gesturefy.data.repository.SpotifyAppRemoteRepository
+import com.anikettcodes.gesturefy.data.service.CameraService
+import com.anikettcodes.gesturefy.data.service.GestureRecognizerService
 import com.anikettcodes.gesturefy.data.service.SpotifyAppRemoteService
 import com.anikettcodes.gesturefy.domain.usecase.AlbumArtUseCase
 import com.anikettcodes.gesturefy.domain.usecase.ConnectSpotifyAppRemoteUsecase
+import com.anikettcodes.gesturefy.domain.usecase.GestureRecognizerUsecase
 import com.anikettcodes.gesturefy.domain.usecase.PlaybackControlUsecase
 import com.anikettcodes.gesturefy.domain.usecase.PlayerStateUsecase
 import com.anikettcodes.gesturefy.domain.usecase.SpotifyInstalledUsecase
@@ -49,4 +53,21 @@ class AppModule {
     @Provides
     @Singleton
     fun albumArtUseCaseProvider(spotifyAppRemoteRepository: SpotifyAppRemoteRepository) = AlbumArtUseCase(spotifyAppRemoteRepository)
+
+    @Provides
+    @Singleton
+    fun cameraServiceProvider(@ApplicationContext context: Context) = CameraService(context)
+
+    @Provides
+    @Singleton
+    fun gestureRecognizerServiceProvider(@ApplicationContext context: Context) = GestureRecognizerService(context)
+
+    @Provides
+    @Singleton
+    fun gestureFyRepositoryProvider(spotifyAppRemoteRepository: SpotifyAppRemoteRepository, gestureRecognizerService: GestureRecognizerService, cameraService: CameraService)
+    = GestureFyRepository(spotifyAppRemoteRepository, gestureRecognizerService, cameraService)
+
+    @Provides
+    @Singleton
+    fun gestureFyUsecaseProvider(gestureFyRepository: GestureFyRepository) = GestureRecognizerUsecase(gestureFyRepository)
 }

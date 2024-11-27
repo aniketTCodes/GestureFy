@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -56,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.LifecycleOwner
 import coil.compose.AsyncImage
 import com.anikettcodes.gesturefy.presentation.viewmodel.HomeViewmodel
 import com.anikettcodes.gesturefy.R
@@ -80,7 +83,7 @@ import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
-fun HomeScreen(){
+fun HomeScreen(lifecycleOwner: LifecycleOwner){
     val homeViewmodel = hiltViewModel<HomeViewmodel>()
     val state = homeViewmodel.state.value
     val snackbarHostState = remember {SnackbarHostState()}
@@ -128,10 +131,6 @@ fun HomeScreen(){
                                 shape = RoundedCornerShape(24.dp)
                             )
                             .clip(RoundedCornerShape(24.dp))
-                            .blur(
-                                radius = 28.dp,
-                                edgeTreatment = BlurredEdgeTreatment.Unbounded
-                            )
                             .background(
                                 brush = Brush.radialGradient(
                                     listOf(
@@ -150,6 +149,9 @@ fun HomeScreen(){
                         if(state.playerState?.track != null){
                             var playBackPosition by rememberSaveable {
                                 mutableIntStateOf(0)
+                            }
+                            LaunchedEffect(Unit) {
+                                homeViewmodel.startGestureRecognizer(lifecycleOwner)
                             }
                             LaunchedEffect(
                                 key1 = state.playerState.isPaused,
@@ -246,7 +248,7 @@ fun GesturefyPlayer(
                         contentDescription = "Album art",
                         contentScale = ContentScale.FillBounds,
                         modifier = Modifier
-                            .size(350.dp)
+                            .fillMaxWidth()
                             .padding(start = 4.dp, end = 4.dp)
                     )
                     }
@@ -291,6 +293,7 @@ fun GesturefyPlayer(
                                 colors = SliderDefaults.colors(
                                     inactiveTickColor = Color.LightGray,
                                     activeTrackColor = Color.White,
+
                                 )
                             )
                         },
