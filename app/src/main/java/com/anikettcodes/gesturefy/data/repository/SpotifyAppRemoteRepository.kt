@@ -1,13 +1,17 @@
 package com.anikettcodes.gesturefy.data.repository
 
+import android.graphics.Bitmap
 import android.util.Log
 import com.anikettcodes.gesturefy.data.service.SpotifyAppRemoteService
-import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.PlayerState
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
+import kotlin.coroutines.resumeWithException
 
 class SpotifyAppRemoteRepository @Inject constructor(
     private val spotifyAppRemoteService: SpotifyAppRemoteService
@@ -61,10 +65,27 @@ class SpotifyAppRemoteRepository @Inject constructor(
                 PlayerOperation.PAUSE -> remote.playerApi.pause()
                 PlayerOperation.NEXT -> remote.playerApi.skipNext()
                 PlayerOperation.PREV -> remote.playerApi.skipPrevious()
+                PlayerOperation.TOGGLE_SHUFFLE -> remote.playerApi.toggleShuffle()
+                PlayerOperation.TOGGLE_REPEAT -> remote.playerApi.toggleRepeat()
             }
         } catch (e:Exception){
             Log.e(TAG,e.message?:"Unknown error while performing player operation")
             throw e
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun getTrackArt(uri:ImageUri): Bitmap{
+        val remote = spotifyAppRemoteService.spotifyAppRemote
+            ?: throw IllegalStateException("Spotify app remote is not connected")
+
+        return suspendCancellableCoroutine<Bitmap> { cont->
+            remote.imagesApi.getImage(uri).setResultCallback {
+                cont.resume(it){}
+            }
+                .setErrorCallback{
+                    cont.resumeWithException(it)
+                }
         }
     }
 
@@ -73,9 +94,12 @@ class SpotifyAppRemoteRepository @Inject constructor(
     }
 }
 
-enum class PlayerOperation{
+enum class PlayerOperation {
     PLAY,
     PAUSE,
     NEXT,
-    PREV
+    PREV,
+    TOGGLE_SHUFFLE,
+    TOGGLE_REPEAT
 }
+

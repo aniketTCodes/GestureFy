@@ -38,7 +38,7 @@ class AuthorizationViewmodel @Inject constructor(
         }
     }
 
-    private fun connectSpotifyAppRemote(){
+    private fun connectSpotifyAppRemote(firstTry:Boolean = false){
         viewModelScope.launch {
             connectSpotifyAppRemoteUsecase().collect{
                 when(it){

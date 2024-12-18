@@ -39,7 +39,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val gestureFyColorScheme = darkColorScheme(
-    primary = BackgroundGreen,
+    primary = Color.Transparent,
     onPrimary = SpotifyGreen,
     secondary = Color.White,
     surface = GestureFySurface,
@@ -61,8 +61,8 @@ fun GestureFyTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
+            window.statusBarColor = Color(0x00000000).toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 

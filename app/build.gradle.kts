@@ -106,6 +106,9 @@ dependencies {
     //GESTURE RECOGNITION MODEL
     implementation("com.google.mediapipe:tasks-vision:0.10.14")
 
+    //Coil
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
     //CAMERA X
     val camerax_version = "1.3.4"
 
@@ -114,6 +117,15 @@ dependencies {
     implementation("androidx.camera:camera-video:1.3.4")
     implementation("androidx.camera:camera-view:1.3.4")
     implementation("androidx.camera:camera-camera2:1.3.4")
+
+    //Notification bar color
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.30.1")
+
+    //Glassmorphic effect
+    implementation("dev.chrisbanes.haze:haze:1.0.0")
+
+    implementation("androidx.palette:palette-ktx:1.0.0")
+
 
 }
 

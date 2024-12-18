@@ -2,13 +2,22 @@ package com.anikettcodes.gesturefy.presentation
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,13 +34,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.anikettcodes.gesturefy.BuildConfig
 import com.anikettcodes.gesturefy.presentation.screen.AuthorizationScreen
+import com.anikettcodes.gesturefy.presentation.screen.HomeScreen
 import com.anikettcodes.gesturefy.presentation.ui.theme.GestureFyTheme
 import com.anikettcodes.gesturefy.presentation.ui.theme.SpotifyGreen
 import com.anikettcodes.gesturefy.presentation.viewmodel.AuthorizationViewmodel
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.Auth
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
@@ -44,6 +58,7 @@ import okhttp3.internal.wait
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             GestureFyTheme {
                 // A surface container using the 'background' color from the theme
@@ -51,54 +66,56 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val snackbarHostState = remember { SnackbarHostState()}
+                    Root()
+                }
+            }
+        }
 
-                    Scaffold(
-                        snackbarHost = { SnackbarHost(hostState = snackbarHostState){data->
-                            Snackbar(
-                                snackbarData = data,
-                                contentColor = Color.White,
-                                containerColor = Color.Red
-                            )
-                        } }
+    }
+    @RequiresApi(Build.VERSION_CODES.S)
+    @Composable
+    private fun Root() {
+        val authorizationViewmodel = hiltViewModel<AuthorizationViewmodel>()
+        val state = authorizationViewmodel.state.value
+        if (state.isLoading) {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxSize()
+            )
+            {
+                CircularProgressIndicator(color = SpotifyGreen)
+            }
+        } else if (state.isConnected)
+            HomeScreen()
+        else{
+            val snackbarHostState = remember { SnackbarHostState()}
+            Scaffold(
+                contentWindowInsets = WindowInsets(top = 0, bottom = WindowInsets.systemBars.getBottom(
+                    LocalDensity.current)),
+                snackbarHost = { SnackbarHost(hostState = snackbarHostState){data->
+                    Snackbar(
+                        snackbarData = data,
+                        contentColor = Color.White,
+                        containerColor = Color.Red
                     )
-                    {
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .padding(it)
-                                .fillMaxSize()
-                        ) {
-                            val authorizationViewmodel = hiltViewModel<AuthorizationViewmodel>()
-                            val state = authorizationViewmodel.state.value
-                            LaunchedEffect(key1 = state.errorMessage) {
-                                if (state.errorMessage != null) {
-                                    snackbarHostState.showSnackbar(
-                                        message = state.errorMessage,
-                                        duration = SnackbarDuration.Short,
-                                    )
-                                }
-                            }
-                            if(state.isLoading){
-                                CircularProgressIndicator(color = SpotifyGreen)
-                            }
-                            else if(state.isConnected){
-                                Text("Home")
-                            }
-                            else{
-                                AuthorizationScreen(
-                                    state.isSpotifyInstalled
-                                ) { if (state.isSpotifyInstalled) connectToSpotify() else getSpotify() }
-                            }
+                } },
+            ) {
+                Column(
+                    modifier = Modifier.padding(it)
+                ) {
+                    LaunchedEffect(state.errorMessage) {
+                        if(state.errorMessage != null){
+                            snackbarHostState.showSnackbar(message = state.errorMessage)
                         }
                     }
-
+                    AuthorizationScreen(
+                        state.isSpotifyInstalled
+                    ) { if (state.isSpotifyInstalled) connectToSpotify() else getSpotify() }
                 }
             }
         }
     }
-
     private fun getSpotify(){
         val getSpotifyIntent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("https://play.google.com/store/apps/details?id=com.spotify.music")

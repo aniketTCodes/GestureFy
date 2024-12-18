@@ -3,7 +3,10 @@ package com.anikettcodes.gesturefy.di
 import android.content.Context
 import com.anikettcodes.gesturefy.data.repository.SpotifyAppRemoteRepository
 import com.anikettcodes.gesturefy.data.service.SpotifyAppRemoteService
+import com.anikettcodes.gesturefy.domain.usecase.AlbumArtUseCase
 import com.anikettcodes.gesturefy.domain.usecase.ConnectSpotifyAppRemoteUsecase
+import com.anikettcodes.gesturefy.domain.usecase.PlaybackControlUsecase
+import com.anikettcodes.gesturefy.domain.usecase.PlayerStateUsecase
 import com.anikettcodes.gesturefy.domain.usecase.SpotifyInstalledUsecase
 import dagger.Module
 import dagger.Provides
@@ -32,4 +35,18 @@ class AppModule {
     @Provides
     @Singleton
     fun spotifyInstalledUsecaseProvider(spotifyAppRemoteRepository: SpotifyAppRemoteRepository) = SpotifyInstalledUsecase(spotifyAppRemoteRepository)
+
+    @Provides
+    @Singleton
+    fun playerStateUsecaseProvider(spotifyAppRemoteRepository: SpotifyAppRemoteRepository) =
+        PlayerStateUsecase(spotifyAppRemoteRepository)
+
+    @Provides
+    @Singleton
+    fun playbackControlUsecaseProvider(spotifyAppRemoteRepository: SpotifyAppRemoteRepository) =
+        PlaybackControlUsecase(spotifyAppRemoteRepository)
+
+    @Provides
+    @Singleton
+    fun albumArtUseCaseProvider(spotifyAppRemoteRepository: SpotifyAppRemoteRepository) = AlbumArtUseCase(spotifyAppRemoteRepository)
 }
