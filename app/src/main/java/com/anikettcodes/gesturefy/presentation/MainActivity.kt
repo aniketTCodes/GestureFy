@@ -45,8 +45,6 @@ import com.anikettcodes.gesturefy.presentation.screen.HomeScreen
 import com.anikettcodes.gesturefy.presentation.ui.theme.GestureFyTheme
 import com.anikettcodes.gesturefy.presentation.ui.theme.SpotifyGreen
 import com.anikettcodes.gesturefy.presentation.viewmodel.AuthorizationViewmodel
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.gms.auth.api.Auth
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import dagger.hilt.EntryPoint
