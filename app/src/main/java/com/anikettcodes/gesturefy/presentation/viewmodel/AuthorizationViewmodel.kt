@@ -3,8 +3,10 @@ package com.anikettcodes.gesturefy.presentation.viewmodel
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anikettcodes.gesturefy.data.repository.GestureFyRepository
 import com.anikettcodes.gesturefy.data.repository.SpotifyAppRemoteRepository
 import com.anikettcodes.gesturefy.domain.usecase.ConnectSpotifyAppRemoteUsecase
+import com.anikettcodes.gesturefy.domain.usecase.GestureRecognizerUsecase
 import com.anikettcodes.gesturefy.domain.usecase.SpotifyInstalledUsecase
 import com.anikettcodes.gesturefy.util.Resource
 import com.spotify.protocol.types.Message
@@ -15,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthorizationViewmodel @Inject constructor(
     private val connectSpotifyAppRemoteUsecase: ConnectSpotifyAppRemoteUsecase,
-    private val spotifyInstalledUsecase: SpotifyInstalledUsecase
+    private val spotifyInstalledUsecase: SpotifyInstalledUsecase,
+    private val gestureRecognizerUsecase: GestureRecognizerUsecase
 ) : ViewModel(){
     private var _state = mutableStateOf(
         AuthState(
@@ -44,7 +47,9 @@ class AuthorizationViewmodel @Inject constructor(
                 when(it){
                     is Resource.Error -> _state.value = _state.value.copy(isLoading = false, isConnected = false, errorMessage = it.message)
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
-                    is Resource.Success -> _state.value = _state.value.copy(isLoading = false, isConnected = true)
+                    is Resource.Success -> {
+                        _state.value = _state.value.copy(isLoading = false, isConnected = true)
+                    }
                 }
             }
         }

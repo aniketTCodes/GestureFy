@@ -56,6 +56,7 @@ import okhttp3.internal.wait
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -87,7 +88,7 @@ class MainActivity : ComponentActivity() {
                 CircularProgressIndicator(color = SpotifyGreen)
             }
         } else if (state.isConnected)
-            HomeScreen()
+            HomeScreen(this)
         else{
             val snackbarHostState = remember { SnackbarHostState()}
             Scaffold(

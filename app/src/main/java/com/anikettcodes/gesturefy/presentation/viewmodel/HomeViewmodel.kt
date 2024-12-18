@@ -5,12 +5,14 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.palette.graphics.Palette
 import com.anikettcodes.gesturefy.data.repository.PlayerOperation
 import com.anikettcodes.gesturefy.domain.usecase.AlbumArtUseCase
+import com.anikettcodes.gesturefy.domain.usecase.GestureRecognizerUsecase
 import com.anikettcodes.gesturefy.domain.usecase.PlaybackControlUsecase
 import com.anikettcodes.gesturefy.domain.usecase.PlayerStateUsecase
 import com.anikettcodes.gesturefy.presentation.ui.theme.BackgroundGreen
@@ -20,6 +22,7 @@ import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.PlayerState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import okhttp3.Response
 import javax.inject.Inject
 
 
@@ -27,12 +30,12 @@ import javax.inject.Inject
 class HomeViewmodel @Inject constructor(
     private val playerStateUsecase: PlayerStateUsecase,
     private val playbackControlUsecase: PlaybackControlUsecase,
-    private val albumArtUseCase: AlbumArtUseCase
+    private val albumArtUseCase: AlbumArtUseCase,
+    private val gestureRecognizerUsecase: GestureRecognizerUsecase
 ) : ViewModel() {
     private val _state = mutableStateOf(
         HomeState(null,null,null, BackgroundGreen)
     )
-
     val state = _state
     init {
         viewModelScope.launch {
@@ -50,12 +53,18 @@ class HomeViewmodel @Inject constructor(
                             updateAlbumArt(null)
                         }
                         state.value = _state.value.copy(playerState = it.data)
-
                     }
                 }
             }
         }
     }
+
+     fun startGestureRecognizer(lifecycleOwner: LifecycleOwner){
+       viewModelScope.launch {
+           gestureRecognizerUsecase(lifecycleOwner)
+       }
+    }
+
 
     private suspend fun updateAlbumArt(uri: ImageUri?){
         if(uri == null){
@@ -78,7 +87,7 @@ class HomeViewmodel @Inject constructor(
 
     private fun updateBackgroundColor(bitmap: Bitmap){
         val palette = Palette.Builder(bitmap).generate()
-        val swatch  = palette.darkVibrantSwatch
+        val swatch  = palette.vibrantSwatch
         if(swatch != null){
             _state.value = _state.value.copy(backgroundColor = Color(swatch.rgb))
         }
@@ -90,6 +99,13 @@ class HomeViewmodel @Inject constructor(
 
     fun performOperation(operation: PlayerOperation){
          playbackControlUsecase(operation)
+    }
+
+    fun seekTo(seekTo:Long){
+        val seekResult = playbackControlUsecase.seekTo(seekTo)
+        if(seekResult is Resource.Error){
+            _state.value = _state.value.copy(errorMessage = seekResult.message)
+        }
     }
 }
 

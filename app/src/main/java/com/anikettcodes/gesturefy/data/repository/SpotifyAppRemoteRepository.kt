@@ -5,6 +5,7 @@ import android.util.Log
 import com.anikettcodes.gesturefy.data.service.SpotifyAppRemoteService
 import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.PlayerState
+import com.spotify.protocol.types.Repeat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -65,11 +66,26 @@ class SpotifyAppRemoteRepository @Inject constructor(
                 PlayerOperation.PAUSE -> remote.playerApi.pause()
                 PlayerOperation.NEXT -> remote.playerApi.skipNext()
                 PlayerOperation.PREV -> remote.playerApi.skipPrevious()
-                PlayerOperation.TOGGLE_SHUFFLE -> remote.playerApi.toggleShuffle()
-                PlayerOperation.TOGGLE_REPEAT -> remote.playerApi.toggleRepeat()
+                PlayerOperation.SHUFFLE_ON -> remote.playerApi.setShuffle(true)
+                PlayerOperation.SHUFFLE_OFF -> remote.playerApi.setShuffle(false)
+                PlayerOperation.REPEAT_ALL -> remote.playerApi.setRepeat(Repeat.ALL)
+                PlayerOperation.REPEAT_ONE -> remote.playerApi.setRepeat(Repeat.ONE)
+                PlayerOperation.REPEAT_OFF -> remote.playerApi.setRepeat(Repeat.OFF)
             }
         } catch (e:Exception){
             Log.e(TAG,e.message?:"Unknown error while performing player operation")
+            throw e
+        }
+    }
+
+    fun seek(seekTo:Long){
+        val remote = spotifyAppRemoteService.spotifyAppRemote
+            ?: throw IllegalStateException("Spotify app remote is not connected")
+
+        try{
+            remote.playerApi.seekTo(seekTo)
+        } catch (e:Exception){
+            Log.e(TAG,e.message?:"Something went wrong")
             throw e
         }
     }
@@ -94,12 +110,17 @@ class SpotifyAppRemoteRepository @Inject constructor(
     }
 }
 
-enum class PlayerOperation {
+enum class PlayerOperation{
     PLAY,
     PAUSE,
     NEXT,
     PREV,
-    TOGGLE_SHUFFLE,
-    TOGGLE_REPEAT
+    SHUFFLE_ON,
+    SHUFFLE_OFF,
+    REPEAT_ALL,
+    REPEAT_ONE,
+    REPEAT_OFF
 }
+
+
 

@@ -11,6 +11,15 @@ class PlaybackControlUsecase @Inject constructor(
      private val spotifyAppRemoteRepository: SpotifyAppRemoteRepository
 ) {
 
+    fun seekTo(seekTo:Long):Resource<Unit>{
+        try{
+            spotifyAppRemoteRepository.seek(seekTo)
+            return Resource.Success(data = Unit)
+        }catch (e:Exception){
+            return Resource.Error(message = "Something went wrong")
+        }
+    }
+
     operator fun invoke(playerOperation: PlayerOperation):Resource<Unit>{
         try {
             spotifyAppRemoteRepository.performPlayerOperation(playerOperation)

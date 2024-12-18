@@ -36,7 +36,10 @@ class SpotifyAppRemoteService @Inject constructor(
                     }
 
                     override fun onFailure(p0: Throwable?) {
-                        it.resumeWithException(p0!!)
+                        Log.d(TAG,p0?.message?:"Unknown")
+                        spotifyAppRemote = null
+                        if(!it.isCompleted) it.resumeWithException(p0!!)
+                        else Log.e(TAG,"Remote connection failed after coroutinecancellation")
                     }
 
                 })
